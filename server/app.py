@@ -38,10 +38,9 @@ class Newsletters(Resource):
 
     def get(self):
         
-        response_dict_list = [n.to_dict() for n in Newsletter.query.all()]
-
+        newsletters=Newsletter.query.all()
         response = make_response(
-            response_dict_list,
+            newsletter_schemas.dump(newsletters),
             200,
         )
 
@@ -114,9 +113,24 @@ class NewsletterByID(Resource):
         )
 
         return response
+class NewsletterSchema(ma.SQLAlchemySchema):
 
+    class Meta:
+        model = Newsletter 
+        load_instance=True
+
+    title = ma.auto_field()
+    published_at = ma.auto_field()
+    url=ma.Hyperlinks({
+        "self": ma.URLFor(
+            "newsletterbyid",
+            values=dict(id="<id>")),
+        "collection": ma.URLFor("newsletters"),
+    })
 api.add_resource(NewsletterByID, '/newsletters/<int:id>')
 
+newsletter_schema = NewsletterSchema()
+newsletter_schemas = NewsletterSchema(many=True)
 
 if __name__ == '__main__':
     app.run(port=5555, debug=True)
